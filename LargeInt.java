@@ -10,7 +10,7 @@ import java.io.*;
 /** Class Name: LargeInt
  *  This is a class that can store an arbritary large number and help carry out operations on
  *  it, including addition and comparisions. This class contains various methods as well as member
- *  variables that help in implementing such an algorithm. The methods, along with the constructors
+ *  variables that help in implementing such an algorithm. The public methods, along with the constructors
  *  are debugOn(), debugOff(), print(), compareTo(), add(), and multiply().
  */ 
 public class LargeInt {
@@ -108,6 +108,20 @@ public class LargeInt {
         return num;
     }
 
+    /** Method Name: private void incrementOccupancy() 
+     *  Increments the occupancy
+     */
+    private void incrementOccupancy() {
+        occupancy++;
+    }
+
+    /** Method Name: private void decrementOccupancy()
+     *  Decrements the occupancy
+     */
+    private void decrementOccupancy() {
+        occupancy--;
+    }
+
     /** Method Name: private int decin (char c)
      *  This is a method that takes in a character and converts it into an integer
      *  value
@@ -193,13 +207,13 @@ public class LargeInt {
      *  @return retSum - the sum of the two LargeInt objects
      */
     public LargeInt add (LargeInt n) throws IOException {
-        // instantiate carry of type Stack<Integer> and totSum of type ArrayList<Integer>
-        Stack<Integer> carry = new Stack<Integer> ();
-        ArrayList<Integer> totSum = new ArrayList<Integer> ();
-        // declare String SumS and int sum and index
-        String sumS = "";
-        int sum = 0;
+        // instantiate revSum of type Stack<Integer> LargeInt to return
+        Stack<Integer> revSum = new Stack<Integer> ();
+        LargeInt theSum = new LargeInt ("0");
+        // declar int sum, carry, and index
+        int sum = 0; 
         int index;
+        int carry = 0;
         // if occupancy of this is greater than n, pad zeroes to n in order to make 
         // size equal
         if (occupancy > n.getOccupancy()) {
@@ -222,28 +236,28 @@ public class LargeInt {
         while (index != -1) {
             // make sum equal to index of num and n
             sum = num.get(index) + n.getVal(index);
-            // check if carry is empty and if not add the top value to sum
-            if (carry.empty() == false) {
-                sum = sum + carry.pop();
+            // check if carry is 0 and if not add carry to sum
+            if (carry != 0) {
+                sum = sum + carry;
+                // make carry equal to 0
+                carry = 0;
             }
-            // if sum is greater than 9 and index is lesser than 0, push 1 to carry
-            // and decrement sum by 10
+            // if sum is greater than 9 and index is lesser than 0, make carry equal
+            // to 1 and decrement sum by 10
             if (sum > 9 && index != 0) {
-                carry.push(1);
+                carry = 1;
                 sum = sum - 10;
             }
-            // add sum to totSum and decrement index by 1
-            totSum.add(sum);
+            // push sum to revSum and decrement index by 1
+            revSum.push(sum);
             index = index - 1;
         }
         // reverse the totSum so that the totSum arrayList is correct order 
-        Collections.reverse(totSum);
-        // add the integers in totSum to sumS using toString()
-        for (Integer s : totSum) {
-            sumS += s.toString();
+        while (revSum.empty() == false) {
+            theSum.getList().add(revSum.pop());
+            // increment occupancy each time we add a digit
+            theSum.incrementOccupancy();
         }
-        // create LargeInt retSum using sumS
-        LargeInt retSum = new LargeInt (sumS);
         // remove the padded zeroes using a loop and checking which one has greater
         // occupancy
         if (occupancy > n.getOccupancy()) {
@@ -256,8 +270,13 @@ public class LargeInt {
                 num.remove(0);
             }
         }
+        // remove the first element of the list which is 0, using which we had
+        // constructed the LargeInt
+        theSum.getList().remove(0);
+        // we decrement the occupancy because we removed a digit
+        theSum.decrementOccupancy();
         // return the LargeInt retSum
-        return retSum;
+        return theSum;
     }
 
     /** Method Name: public LargeInt multiply (int mult)
@@ -270,42 +289,57 @@ public class LargeInt {
     public LargeInt multiply (int mult) throws IOException {
         // initialize index to last index of num
         int index = occupancy - 1;
-        // declare int types digit and place and String productS
+        // declare int types digit and place and carry
         int digit = 0;
-        int place;
-        String productS = "";
-        // Instantiate carry of type Stack<Integer> and product of type ArrayList<Integer>
-        Stack<Integer> carry = new Stack<Integer> ();
-        ArrayList<Integer> product = new ArrayList<Integer> ();
+        int place = 0;
+        // Instantiate revProduct of type Stack<Integer> and LargeInt to return
+        int carry = 0;
+        Stack<Integer> revProduct = new Stack<Integer> ();
+        LargeInt theProduct = new LargeInt ("0");
         // go through num in a loop
         while (index != -1) {
             // multiply mult with digit of num at index
             digit = num.get(index) * mult;
             // if stack is not empty, add digit to top value of carry
-            if (carry.empty() == false) {
-                digit = digit + carry.pop();
+            if (carry != 0) {
+                digit = digit + carry;
+                carry = 0;
             }
             // if digit is greater than 9 and index is not 0
             if (digit > 9 && index != 0) {
                 // get the tens place of digit and push to carry
-                place = (digit - (digit % 10)) / 10;
-                carry.push(place);
+                place = digit / 10;
+                carry = place;
                 // update digit to its ones place
                 digit = digit % 10;
             }
-            // add digit to product and decrement index by 1
-            product.add(digit);
+            // if it is the last digit, we seperate out all the digits of the product
+            if (digit > 9 && index == 0) {
+                // while digit divided by 10 doesn't give 0, we mod digit by 10 and 
+                // push to revProduct
+                while ((digit / 10) != 0) {
+                    revProduct.push(digit % 10);
+                    // make digit equal to the quotient of digit by 10
+                    digit = digit / 10;
+                }
+            }
+            // push digit to revProduct and decrement index by 1
+            revProduct.push(digit);
             index = index - 1;
         }
-        // reverse the product ArrayList
-        Collections.reverse(product);
-        // add the integers in product to productS using toString()
-        for (Integer i : product) {
-            productS += i.toString();
+        // while the stack is not empty, we add the digits to theProduct in reverse
+        while (revProduct.empty() == false) {
+            theProduct.getList().add(revProduct.pop());
+            // each time we add a digit, we increment the occupancy
+            theProduct.incrementOccupancy();
         }
-        // create the LargeInt retProduct using productS and return
-        LargeInt retProduct = new LargeInt (productS); 
-        return retProduct;
+        // remove the first element of the list which is 0, using which we had
+        // constructed the LargeInt
+        theProduct.getList().remove(0);
+        // we decrement the occupancy because we removed a digit
+        theProduct.decrementOccupancy();
+        // return the product
+        return theProduct;
     }
 }
 
