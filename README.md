@@ -29,7 +29,7 @@ seperate indices of the ArrayList allows for simple algorithms to compare, add, 
 <h5> Further Development </h5>
 
 I am currently working on making the storage of the large integer more efficient by using base-256, that allows every bit to be used for storing the large integer, rather than 
-storing it using 16 bits for a single decimal integer.
+storing it using 32 bits for a single decimal integer.
 
 <h3> Using the Project </h3>
 
